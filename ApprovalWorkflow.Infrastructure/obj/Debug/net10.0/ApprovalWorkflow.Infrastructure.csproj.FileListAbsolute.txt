@@ -1,0 +1,17 @@
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Infrastructure.deps.json
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Infrastructure.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Infrastructure.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Application.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Domain.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Domain.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\bin\Debug\net10.0\ApprovalWorkflow.Application.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.AssemblyInfo.cs
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\Approval.69E6F7BA.Up2Date
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\refint\ApprovalWorkflow.Infrastructure.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ApprovalWorkflow.Infrastructure.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Infrastructure\obj\Debug\net10.0\ref\ApprovalWorkflow.Infrastructure.dll

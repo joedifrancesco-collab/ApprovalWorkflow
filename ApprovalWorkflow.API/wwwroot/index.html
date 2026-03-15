@@ -1,0 +1,2555 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Approval Workflow</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    /* â”€â”€ Login â”€â”€ */
+    #loginWrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 48px 40px 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .card h1 { font-size: 1.6rem; color: #1a1a2e; margin-bottom: 6px; }
+    .card p.subtitle { color: #666; font-size: 0.9rem; margin-bottom: 32px; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #222;
+      transition: border-color 0.2s;
+      margin-bottom: 20px;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+    }
+
+    input.invalid, select.invalid { border-color: #dc2626; }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button[type="submit"]:hover { background: #4338ca; }
+    button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .error-msg {
+      color: #dc2626;
+      font-size: 0.85rem;
+      margin-top: -12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* â”€â”€ Error dialog â”€â”€ */
+    .dialog-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .dialog-overlay.visible { display: flex; }
+
+    .dialog {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 36px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+
+    .dialog .icon { font-size: 3rem; margin-bottom: 16px; }
+    .dialog h2 { font-size: 1.3rem; margin-bottom: 10px; }
+    .dialog p { color: #555; font-size: 0.95rem; margin-bottom: 28px; }
+
+    .dialog button {
+      padding: 10px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .dialog button:hover { background: #b91c1c; }
+
+    .dialog.error-list ul {
+      text-align: left;
+      list-style: disc inside;
+      color: #555;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    /* â”€â”€ App shell â”€â”€ */
+    .app-header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .app-header h1 { font-size: 1.25rem; letter-spacing: 0.02em; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-badge {
+      font-size: 0.88rem;
+      color: #c7d2fe;
+    }
+
+    .role-chip {
+      background: #4f46e5;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary   { background: #4f46e5; color: #fff; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+
+    .app-main { padding: 32px; max-width: 1200px; margin: 0 auto; }
+    #homePage .app-main { max-width: 1100px; }
+
+    /* -- Sortable headers -- */
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th.sortable:hover { background: #f1f5f9; color: #1e293b; }
+    thead th.sort-asc::after  { content: ' \25B2'; font-size: 0.7em; color: #4f46e5; }
+    thead th.sort-desc::after { content: ' \25BC'; font-size: 0.7em; color: #4f46e5; }
+
+    /* â”€â”€ Request table â”€â”€ */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-header h2 { font-size: 1.15rem; color: #1a1a2e; }
+
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f8fafc; }
+    tbody tr.clickable-row { cursor: pointer; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .status-chip {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .status-awaiting  { background: #fef3c7; color: #92400e; }
+    .status-approved  { background: #d1fae5; color: #065f46; }
+    .status-printed   { background: #dbeafe; color: #1e40af; }
+    .status-active    { background: #d1fae5; color: #065f46; }
+    .status-inactive  { background: #f1f5f9; color: #64748b; }
+    .status-unknown   { background: #f1f5f9; color: #64748b; }
+
+    /* â”€â”€ New Request form â”€â”€ */
+    .form-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #4f46e5;
+      font-size: 0.88rem;
+      font-weight: 600;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 24px;
+    }
+
+    .form-back:hover { color: #4338ca; }
+
+    .form-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 32px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .form-card h2 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 24px; }
+
+    .form-section {
+      border-top: 1px solid #e2e8f0;
+      margin-top: 24px;
+      padding-top: 20px;
+    }
+
+    .form-section h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 20px;
+    }
+
+    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .form-row.full  { grid-template-columns: 1fr; }
+
+    .field-note {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: -16px;
+      margin-bottom: 16px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 28px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 24px;
+    }
+
+    .required-star { color: #dc2626; }
+
+    /* â”€â”€ Validation error box â”€â”€ */
+    .val-errors {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .val-errors ul {
+      list-style: disc inside;
+      color: #991b1b;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    /* ── View Request (read-only) ── */
+    .view-page-main { padding: 32px; max-width: 960px; margin: 0 auto; }
+
+    .view-summary-banner {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .view-banner-title { flex: 1 1 300px; }
+    .view-banner-title .req-number {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+    .view-banner-title h2 {
+      font-size: 1.5rem;
+      color: #1a1a2e;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .view-banner-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .view-banner-meta .meta-pill {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .view-banner-meta .meta-pill .meta-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+    }
+
+    .view-banner-meta .meta-pill .meta-val {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .view-sections { display: flex; flex-direction: column; gap: 16px; }
+
+    .view-section-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+
+    .view-section-card .vsc-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .view-section-card .vsc-header .vsc-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .view-section-card .vsc-header h3 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #475569;
+    }
+
+    .view-section-card .vsc-body {
+      padding: 20px 24px 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0 24px;
+    }
+
+    .vf {
+      margin-bottom: 20px;
+    }
+
+    .vf .vf-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+
+    .vf .vf-value {
+      font-size: 0.97rem;
+      color: #1e293b;
+      font-weight: 500;
+      line-height: 1.45;
+    }
+
+    .vf .vf-value.empty {
+      color: #cbd5e1;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .vf .vf-value.span2 { grid-column: span 2; }
+
+    .vf.full {
+      grid-column: 1 / -1;
+    }
+
+    .vf .vf-value.multiline {
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    /* -- Audit timeline -- */
+    .audit-timeline {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .audit-timeline li {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .audit-timeline li:last-child { border-bottom: none; }
+
+    .audit-dot {
+      flex-shrink: 0;
+      width: 10px;
+      height: 10px;
+      background: #4f46e5;
+      border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .audit-content { flex: 1; }
+
+    .audit-action {
+      font-size: 0.92rem;
+      color: #1e293b;
+      line-height: 1.45;
+      margin-bottom: 3px;
+    }
+
+    .audit-meta {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .audit-empty {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      font-style: italic;
+      padding: 8px 0;
+    }
+
+    /* -- Data Managers tabs -- */
+    .dm-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 24px;
+    }
+    .dm-tab {
+      padding: 10px 24px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #64748b;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .dm-tab:hover { color: #4f46e5; }
+    .dm-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+  </style>
+</head>
+<body>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LOGIN â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="loginWrapper">
+    <div class="card" id="loginCard">
+      <h1>Approval Workflow</h1>
+      <p class="subtitle">Sign in to continue</p>
+
+      <form id="loginForm" novalidate>
+        <label for="userNumber">User Number</label>
+        <input id="userNumber" type="text" placeholder="e.g. 12345678" autocomplete="username" required />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+
+        <p class="error-msg" id="loginError"></p>
+        <button type="submit" id="submitBtn">Sign In</button>
+      </form>
+      <p style="text-align:center;margin-top:20px;">
+        <a href="#" onclick="showForgotPasswordPage();return false;"
+           style="color:#4f46e5;font-size:0.88rem;text-decoration:none;">Forgot password?</a>
+      </p>
+    </div>
+
+    <!-- Forgot Password card -->
+    <div class="card" id="forgotCard" style="display:none;">
+      <h1>Forgot Password</h1>
+      <p class="subtitle">Enter your email address and we'll send you a reset link.</p>
+      <form id="forgotForm" novalidate>
+        <label for="fp_email">Email Address</label>
+        <input id="fp_email" type="email" placeholder="you@example.com" autocomplete="email" required />
+        <p class="error-msg" id="fpError"></p>
+        <button type="submit" id="fpSubmitBtn">Send Reset Link</button>
+      </form>
+      <p style="text-align:center;margin-top:20px;">
+        <a href="#" onclick="showLoginPage();return false;"
+           style="color:#4f46e5;font-size:0.88rem;text-decoration:none;">&#8592; Back to Sign In</a>
+      </p>
+    </div>
+
+    <!-- Forgot Password — sent confirmation card -->
+    <div class="card" id="fpSuccessCard" style="display:none;">
+      <div style="text-align:center;font-size:3rem;margin-bottom:16px;">&#128231;</div>
+      <h1 style="text-align:center;font-size:1.4rem;">Check Your Email</h1>
+      <p class="subtitle" style="text-align:center;margin-bottom:0;">
+        If that address is on file we've sent a reset link.<br>
+        Please check your inbox (and spam folder).
+      </p>
+      <p style="text-align:center;margin-top:28px;">
+        <a href="#" onclick="showLoginPage();return false;"
+           style="color:#4f46e5;font-size:0.88rem;text-decoration:none;">&#8592; Back to Sign In</a>
+      </p>
+    </div>
+
+    <!-- Reset Password card (arrived via ?token= link) -->
+    <div class="card" id="resetCard" style="display:none;">
+      <h1>Set New Password</h1>
+      <p class="subtitle">Choose a new password for your account.</p>
+      <form id="resetForm" novalidate>
+        <input type="hidden" id="rp_token" />
+        <label for="rp_password">New Password</label>
+        <input id="rp_password" type="password" placeholder="At least 8 characters"
+               autocomplete="new-password" required />
+        <label for="rp_confirm">Confirm New Password</label>
+        <input id="rp_confirm" type="password" placeholder="Re-enter new password"
+               autocomplete="new-password" required />
+        <p class="error-msg" id="rpError"></p>
+        <button type="submit" id="rpSubmitBtn">Set New Password</button>
+      </form>
+    </div>
+
+    <!-- Reset Password — success card -->
+    <div class="card" id="rpSuccessCard" style="display:none;">
+      <div style="text-align:center;font-size:3rem;margin-bottom:16px;">&#10003;</div>
+      <h1 style="text-align:center;font-size:1.4rem;">Password Updated</h1>
+      <p class="subtitle" style="text-align:center;margin-bottom:0;">
+        Your password has been reset successfully.
+      </p>
+      <p style="text-align:center;margin-top:28px;">
+        <a href="#" onclick="showLoginPage();return false;"
+           style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 28px;
+                  border-radius:8px;text-decoration:none;font-weight:600;">Sign In</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HOME â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="homePage" style="display:none;">
+    <header class="app-header">
+      <h1>Approval Workflow</h1>
+      <div class="header-right">
+        <span class="user-badge" id="headerUser"></span>
+        <span class="role-chip" id="headerRole"></span>
+        <button class="btn btn-secondary" id="manageUsersBtn" style="display:none;"
+                onclick="showAdminUsersPage()">Manage Users</button>
+        <button class="btn btn-secondary" id="dataMgrBtn" style="display:none;"
+                onclick="showDataManagersPage()">Data Managers</button>
+        <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="section-header">
+        <h2>Requests</h2>
+        <button class="btn btn-primary" id="newRequestBtn" style="display:none;"
+                onclick="showNewRequestPage()">+ New Request</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="requestsTable">
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortRequests('requestID')">#</th>
+              <th class="sortable" onclick="sortRequests('name')">Name</th>
+              <th class="sortable" onclick="sortRequests('companyName')">Company</th>
+              <th class="sortable" onclick="sortRequests('location')">Location</th>
+              <th class="sortable" onclick="sortRequests('tierName')">Tier</th>
+              <th class="sortable" onclick="sortRequests('statusName')">Status</th>
+              <th class="sortable" onclick="sortRequests('submittedBy')">Submitted By</th>
+              <th class="sortable" onclick="sortRequests('createdAt')">Date</th>
+            </tr>
+          </thead>
+          <tbody id="requestsBody">
+            <tr><td colspan="8" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NEW REQUEST â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="newRequestPage" style="display:none;">
+    <header class="app-header">
+      <h1>Approval Workflow</h1>
+      <div class="header-right">
+        <span class="user-badge" id="formHeaderUser"></span>
+        <span class="role-chip" id="formHeaderRole"></span>
+        <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+    <main class="app-main">
+      <div class="form-card">
+        <h2>New Card Request</h2>
+
+        <div class="val-errors" id="valErrors"><ul id="valErrorList"></ul></div>
+
+        <form id="requestForm" novalidate>
+
+          <!-- Company -->
+          <div class="form-section">
+            <h3>Company Information</h3>
+            <div class="form-row">
+              <div>
+                <label for="f_companyName">Company Name <span class="required-star">*</span></label>
+                <input id="f_companyName" type="text" />
+              </div>
+              <div>
+                <label for="f_jobTitle">Job Title</label>
+                <input id="f_jobTitle" type="text" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact -->
+          <div class="form-section">
+            <h3>Contact Information</h3>
+            <div class="form-row">
+              <div>
+                <label for="f_firstName">First Name <span class="required-star">*</span></label>
+                <input id="f_firstName" type="text" />
+              </div>
+              <div>
+                <label for="f_lastName">Last Name <span class="required-star">*</span></label>
+                <input id="f_lastName" type="text" />
+              </div>
+            </div>
+            <div class="form-row full">
+              <div>
+                <label for="f_address1">Address Line 1 <span class="required-star">*</span></label>
+                <input id="f_address1" type="text" />
+              </div>
+            </div>
+            <div class="form-row full">
+              <div>
+                <label for="f_address2">Address Line 2</label>
+                <input id="f_address2" type="text" />
+              </div>
+            </div>
+            <div class="form-row three">
+              <div>
+                <label for="f_city">City <span class="required-star">*</span></label>
+                <input id="f_city" type="text" />
+              </div>
+              <div>
+                <label for="f_state">State / Province <span class="required-star">*</span></label>
+                <select id="f_state">
+                  <option value="">-- Select a State --</option>
+                  <option>Alabama</option><option>Alaska</option><option>Arizona</option>
+                  <option>Arkansas</option><option>California</option><option>Colorado</option>
+                  <option>Connecticut</option><option>Delaware</option><option>Florida</option>
+                  <option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+                  <option>Illinois</option><option>Indiana</option><option>Iowa</option>
+                  <option>Kansas</option><option>Kentucky</option><option>Louisiana</option>
+                  <option>Maine</option><option>Maryland</option><option>Massachusetts</option>
+                  <option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+                  <option>Missouri</option><option>Montana</option><option>Nebraska</option>
+                  <option>Nevada</option><option>New Hampshire</option><option>New Jersey</option>
+                  <option>New Mexico</option><option>New York</option><option>North Carolina</option>
+                  <option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+                  <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option>
+                  <option>South Carolina</option><option>South Dakota</option><option>Tennessee</option>
+                  <option>Texas</option><option>Utah</option><option>Vermont</option>
+                  <option>Virginia</option><option>Washington</option><option>West Virginia</option>
+                  <option>Wisconsin</option><option>Wyoming</option>
+                  <option>District of Columbia</option>
+                  <option>American Samoa</option><option>Guam</option>
+                  <option>Northern Mariana Islands</option><option>Puerto Rico</option>
+                  <option>U.S. Virgin Islands</option>
+                </select>
+              </div>
+              <div>
+                <label for="f_zip">Zip / Postal Code <span class="required-star">*</span></label>
+                <input id="f_zip" type="text" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="f_country">Country</label>
+                <input id="f_country" type="text" value="UNITED STATES" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Card -->
+          <div class="form-section">
+            <h3>Card Information</h3>
+            <div class="form-row">
+              <div>
+                <label for="f_tier">Tier <span class="required-star">*</span></label>
+                <select id="f_tier">
+                  <option value="">-- Select a Tier --</option>
+                </select>
+              </div>
+              <div>
+                <label for="f_expDate">Expiration Date <span class="required-star">*</span></label>
+                <input id="f_expDate" type="date" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Relationship -->
+          <div class="form-section">
+            <h3>Relationship Information</h3>
+            <div class="form-row">
+              <div>
+                <label for="f_location">Location</label>
+                <select id="f_location">
+                  <option value="">-- Select a Location --</option>
+                </select>
+              </div>
+              <div>
+                <label for="f_manager">Manager</label>
+                <input id="f_manager" type="text" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="f_approver">Approver</label>
+                <select id="f_approver">
+                  <option value="">-- Select an Approver --</option>
+                </select>
+                <p class="field-note">Only users with the Approver role are listed.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-section">
+            <h3>Notes</h3>
+            <div class="form-row full">
+              <div>
+                <label for="f_notes">Note</label>
+                <textarea id="f_notes" rows="4" placeholder="Any additional notes..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="showHomePage()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="saveRequestBtn">Submit Request</button>
+          </div>
+
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- VIEW REQUEST (read-only) -->
+  <div id="viewRequestPage" style="display:none;">
+    <header class="app-header">
+      <h1>Approval Workflow</h1>
+      <div class="header-right">
+        <span class="user-badge" id="viewHeaderUser"></span>
+        <span class="role-chip" id="viewHeaderRole"></span>
+        <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+    <main class="view-page-main">
+      <button class="form-back" onclick="showHomePage()">&#8592; Back to Requests</button>
+
+      <!-- Summary banner -->
+      <div class="view-summary-banner">
+        <div class="view-banner-title">
+          <div class="req-number">Request #<span id="v_requestID"></span></div>
+          <h2 id="viewTitle">Card Request</h2>
+          <span id="v_statusChip"></span>
+        </div>
+        <div class="view-banner-meta">
+          <div class="meta-pill">
+            <span class="meta-label">Submitted By</span>
+            <span class="meta-val" id="v_submittedBy"></span>
+          </div>
+          <div class="meta-pill">
+            <span class="meta-label">Date</span>
+            <span class="meta-val" id="v_createdAt"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approval action bar — visible only for Approver/Admin on Awaiting Approval requests -->
+      <div id="v_actionBar" style="display:none;margin:0 0 8px;text-align:right;">
+        <button id="v_approveBtn" class="btn btn-primary"
+                style="background:#16a34a;border-color:#16a34a;margin-right:8px;"
+                onclick="approveRequest()">&#10003; Approve</button>
+        <button id="v_rejectBtn" class="btn btn-secondary"
+                style="color:#dc2626;border-color:#dc2626;"
+                onclick="rejectRequest()">&#10007; Reject</button>
+      </div>
+
+      <div class="view-sections">
+
+        <!-- Company -->
+        <div class="view-section-card">
+          <div class="vsc-header">
+            <div class="vsc-icon" style="background:#ede9fe;">&#127970;</div>
+            <h3>Company Information</h3>
+          </div>
+          <div class="vsc-body">
+            <div class="vf">
+              <div class="vf-label">Company Name</div>
+              <div class="vf-value" id="v_companyName"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Job Title</div>
+              <div class="vf-value" id="v_jobTitle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="view-section-card">
+          <div class="vsc-header">
+            <div class="vsc-icon" style="background:#dbeafe;">&#128100;</div>
+            <h3>Contact Information</h3>
+          </div>
+          <div class="vsc-body">
+            <div class="vf">
+              <div class="vf-label">First Name</div>
+              <div class="vf-value" id="v_firstName"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Last Name</div>
+              <div class="vf-value" id="v_lastName"></div>
+            </div>
+            <div class="vf full">
+              <div class="vf-label">Address Line 1</div>
+              <div class="vf-value" id="v_address1"></div>
+            </div>
+            <div class="vf full">
+              <div class="vf-label">Address Line 2</div>
+              <div class="vf-value" id="v_address2"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">City</div>
+              <div class="vf-value" id="v_city"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">State / Province</div>
+              <div class="vf-value" id="v_state"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Zip / Postal Code</div>
+              <div class="vf-value" id="v_zip"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Country</div>
+              <div class="vf-value" id="v_country"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="view-section-card">
+          <div class="vsc-header">
+            <div class="vsc-icon" style="background:#dcfce7;">&#128179;</div>
+            <h3>Card Information</h3>
+          </div>
+          <div class="vsc-body">
+            <div class="vf">
+              <div class="vf-label">Tier</div>
+              <div class="vf-value" id="v_tierName"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Expiration Date</div>
+              <div class="vf-value" id="v_expDate"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Card Status</div>
+              <div class="vf-value" id="v_cardStatus"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Relationship -->
+        <div class="view-section-card">
+          <div class="vsc-header">
+            <div class="vsc-icon" style="background:#fef3c7;">&#128101;</div>
+            <h3>Relationship Information</h3>
+          </div>
+          <div class="vsc-body">
+            <div class="vf">
+              <div class="vf-label">Location</div>
+              <div class="vf-value" id="v_location"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Manager</div>
+              <div class="vf-value" id="v_manager"></div>
+            </div>
+            <div class="vf">
+              <div class="vf-label">Approver</div>
+              <div class="vf-value" id="v_approver"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="view-section-card">
+          <div class="vsc-header">
+            <div class="vsc-icon" style="background:#f1f5f9;">&#128196;</div>
+            <h3>Notes</h3>
+          </div>
+          <div class="vsc-body">
+            <div class="vf full">
+              <div class="vf-label">Note</div>
+              <div class="vf-value multiline" id="v_notes"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Log -->
+        <div class="view-section-card">
+          <div class="vsc-header">
+            <div class="vsc-icon" style="background:#e0f2fe;">&#128221;</div>
+            <h3>Audit Log</h3>
+          </div>
+          <div class="vsc-body" style="display:block; padding-bottom:4px;">
+            <ul class="audit-timeline" id="v_auditLog">
+              <li><span class="audit-empty">No audit entries.</span></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LOGIN ERROR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+
+  <!-- ADMIN: USERS LIST -->
+  <div id="adminUsersPage" style="display:none;">
+    <header class="app-header">
+      <h1>Approval Workflow</h1>
+      <div class="header-right">
+        <span class="user-badge" id="adminHeaderUser"></span>
+        <span class="role-chip" id="adminHeaderRole"></span>
+        <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+    <main class="app-main">
+      <div class="section-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="form-back" onclick="showHomePage()" style="margin-bottom:0;">&#8592; Back</button>
+          <h2 style="margin:0;">Manage Users</h2>
+        </div>
+        <button class="btn btn-primary" onclick="showAddUserPage()">+ Add User</button>
+      </div>
+      <div class="table-wrap">
+        <table id="adminUsersTable">
+          <thead><tr>
+            <th>#</th><th>Name</th><th>User #</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="adminUsersBody">
+            <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- ADMIN: ADD/EDIT USER -->
+  <div id="adminEditUserPage" style="display:none;">
+    <header class="app-header">
+      <h1>Approval Workflow</h1>
+      <div class="header-right">
+        <span class="user-badge" id="editUserHeaderUser"></span>
+        <span class="role-chip" id="editUserHeaderRole"></span>
+        <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+    <main class="app-main">
+      <button class="form-back" onclick="showAdminUsersPage()">&#8592; Back to Users</button>
+      <div class="form-card">
+        <h2 id="editUserTitle">Add User</h2>
+        <div class="val-errors" id="editUserErrors"><ul id="editUserErrorList"></ul></div>
+        <form id="editUserForm" novalidate>
+          <input type="hidden" id="eu_id" />
+          <div class="form-section">
+            <h3>Profile</h3>
+            <div class="form-row">
+              <div>
+                <label for="eu_firstName">First Name <span class="required-star">*</span></label>
+                <input id="eu_firstName" type="text" />
+              </div>
+              <div>
+                <label for="eu_lastName">Last Name <span class="required-star">*</span></label>
+                <input id="eu_lastName" type="text" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="eu_userNumber">User Number <span class="required-star">*</span></label>
+                <input id="eu_userNumber" type="text" />
+              </div>
+              <div>
+                <label for="eu_email">Email</label>
+                <input id="eu_email" type="email" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="eu_role">Role <span class="required-star">*</span></label>
+                <select id="eu_role"><option value="">-- Select Role --</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="form-section" id="eu_passwordSection">
+            <h3>Password</h3>
+            <div class="form-row">
+              <div>
+                <label for="eu_password">Password <span class="required-star">*</span></label>
+                <input id="eu_password" type="password" placeholder="At least 8 characters" />
+              </div>
+              <div>
+                <label for="eu_passwordConfirm">Confirm Password <span class="required-star">*</span></label>
+                <input id="eu_passwordConfirm" type="password" />
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="showAdminUsersPage()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="saveUserBtn">Save User</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- ADMIN: SET PASSWORD MODAL -->
+  <div class="dialog-overlay" id="setPasswordOverlay">
+    <div class="dialog" style="text-align:left;">
+      <h2 style="margin-bottom:16px;">Set Password</h2>
+      <input type="hidden" id="sp_userId" />
+      <label style="display:block;margin-bottom:6px;">New Password</label>
+      <input id="sp_password" type="password" placeholder="At least 8 characters"
+             style="width:100%;margin-bottom:12px;" />
+      <label style="display:block;margin-bottom:6px;">Confirm Password</label>
+      <input id="sp_confirm" type="password" style="width:100%;margin-bottom:12px;" />
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-weight:normal;cursor:pointer;">
+        <input type="checkbox" id="sp_mustChange" /> Require user to change password at next login
+      </label>
+      <p class="error-msg" id="sp_error" style="margin-bottom:12px;"></p>
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeSetPasswordModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitSetPassword()">Save Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN: CONFIRM ACTION MODAL -->
+  <div class="dialog-overlay" id="confirmActionOverlay">
+    <div class="dialog">
+      <div class="icon" id="confirmIcon">&#9888;</div>
+      <h2 id="confirmTitle">Confirm</h2>
+      <p id="confirmMessage">Are you sure?</p>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn btn-primary" id="confirmOkBtn" style="background:#dc2626;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT REQUEST EMAIL PLACEHOLDER -->
+  <div class="dialog-overlay" id="submitRequestOverlay">
+    <div class="dialog">
+      <div class="icon">&#9993;</div>
+      <h2>Request Submitted</h2>
+      <p>An email was sent to <strong id="sr_approverName"></strong> notifying them of a new request awaiting approval.</p>
+      <p style="font-size:13px;color:#6b7280;margin-top:-8px;">(This is a placeholder for future email functionality.)</p>
+      <button class="btn btn-primary" style="margin-top:8px;" onclick="closeSubmitRequestOverlay()">OK</button>
+    </div>
+  </div>
+
+  <!-- STATUS ACTION EMAIL PLACEHOLDER -->
+  <div class="dialog-overlay" id="statusActionOverlay">
+    <div class="dialog">
+      <div class="icon" id="sa_icon">&#9993;</div>
+      <h2 id="sa_title">Request Approved</h2>
+      <p>An email was sent to <strong id="sa_name"></strong> informing them of the change in status.</p>
+      <p style="font-size:13px;color:#6b7280;margin-top:-8px;">(This is a placeholder for future email functionality.)</p>
+      <button class="btn btn-primary" style="margin-top:8px;" onclick="closeStatusActionOverlay()">OK</button>
+    </div>
+  </div>
+
+  <!-- FORCE CHANGE PASSWORD PAGE -->
+  <div id="changePasswordPage" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <div class="card">
+        <h1>Change Password Required</h1>
+        <p class="subtitle">Your administrator requires you to set a new password before continuing.</p>
+        <form id="changePasswordForm" novalidate>
+          <label for="cp_password">New Password</label>
+          <input id="cp_password" type="password" placeholder="At least 8 characters"
+                 autocomplete="new-password" required />
+          <label for="cp_confirm">Confirm Password</label>
+          <input id="cp_confirm" type="password" placeholder="Re-enter new password"
+                 autocomplete="new-password" required />
+          <p class="error-msg" id="cp_error"></p>
+          <button type="submit" id="cp_submitBtn">Set New Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA MANAGERS PAGE -->
+  <div id="dataManagersPage" style="display:none;">
+    <header class="app-header">
+      <h1>Approval Workflow</h1>
+      <div class="header-right">
+        <span class="user-badge" id="dmHeaderUser"></span>
+        <span class="role-chip" id="dmHeaderRole"></span>
+        <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+    <main class="app-main">
+      <div class="section-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="form-back" onclick="showHomePage()" style="margin-bottom:0;">&#8592; Back</button>
+          <h2 style="margin:0;">Data Managers</h2>
+        </div>
+      </div>
+
+      <div class="dm-tabs">
+        <button class="dm-tab active" id="dmTab-locations" onclick="dmSwitchTab('locations')">Locations</button>
+        <button class="dm-tab" id="dmTab-statuses"  onclick="dmSwitchTab('statuses')">Statuses</button>
+        <button class="dm-tab" id="dmTab-roles"     onclick="dmSwitchTab('roles')">Roles</button>
+      </div>
+
+      <!-- LOCATIONS panel -->
+      <div id="dmPanel-locations">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Location Name</th><th style="width:120px;">Actions</th></tr></thead>
+            <tbody id="dmLocationsBody">
+              <tr><td colspan="3" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <input id="dmNewLocation" type="text" placeholder="New location name"
+                 style="flex:1;max-width:320px;margin-bottom:0;" />
+          <button class="btn btn-primary" onclick="dmAddLocation()">+ Add</button>
+        </div>
+      </div>
+
+      <!-- STATUSES panel -->
+      <div id="dmPanel-statuses" style="display:none;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Status Name</th><th style="width:120px;">Actions</th></tr></thead>
+            <tbody id="dmStatusesBody">
+              <tr><td colspan="3" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <input id="dmNewStatus" type="text" placeholder="New status name"
+                 style="flex:1;max-width:320px;margin-bottom:0;" />
+          <button class="btn btn-primary" onclick="dmAddStatus()">+ Add</button>
+        </div>
+      </div>
+
+      <!-- ROLES panel -->
+      <div id="dmPanel-roles" style="display:none;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Role Name</th><th>Description</th><th>Sort</th><th style="width:120px;">Actions</th></tr></thead>
+            <tbody id="dmRolesBody">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:20px 24px;">
+          <h3 style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-bottom:16px;">Add Role</h3>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="flex:1;min-width:140px;">
+              <label for="dmNewRoleName">Name <span class="required-star">*</span></label>
+              <input id="dmNewRoleName" type="text" placeholder="Role name" style="margin-bottom:0;" />
+            </div>
+            <div style="flex:2;min-width:200px;">
+              <label for="dmNewRoleDesc">Description</label>
+              <input id="dmNewRoleDesc" type="text" placeholder="Description" style="margin-bottom:0;" />
+            </div>
+            <div style="width:100px;">
+              <label for="dmNewRoleSort">Sort Order</label>
+              <input id="dmNewRoleSort" type="number" value="0" style="margin-bottom:0;" />
+            </div>
+            <button class="btn btn-primary" onclick="dmAddRole()" style="align-self:flex-end;white-space:nowrap;">+ Add Role</button>
+          </div>
+          <p id="dmRoleAddError" style="color:#dc2626;font-size:0.85rem;margin-top:8px;display:none;"></p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- DATA MANAGERS: EDIT OVERLAY -->
+  <div class="dialog-overlay" id="dmEditOverlay">
+    <div class="dialog" style="text-align:left;max-width:460px;">
+      <h2 id="dmEditTitle" style="margin-bottom:16px;">Edit</h2>
+      <input type="hidden" id="dmEditId" />
+      <input type="hidden" id="dmEditType" />
+
+      <div id="dmEditNameField">
+        <label for="dmEditName" style="margin-bottom:6px;">Name <span class="required-star">*</span></label>
+        <input id="dmEditName" type="text" style="width:100%;margin-bottom:8px;" />
+      </div>
+
+      <div id="dmEditRoleFields" style="display:none;">
+        <label style="margin-bottom:6px;">Role Name <span class="required-star">*</span></label>
+        <input id="dmEditRoleName" type="text" style="width:100%;margin-bottom:8px;" />
+        <label style="margin-bottom:6px;">Description</label>
+        <input id="dmEditRoleDesc" type="text" style="width:100%;margin-bottom:8px;" />
+        <label style="margin-bottom:6px;">Sort Order</label>
+        <input id="dmEditRoleSort" type="number" style="width:100px;margin-bottom:8px;" />
+      </div>
+
+      <p id="dmEditError" style="color:#dc2626;font-size:0.85rem;min-height:1.2em;margin-bottom:8px;"></p>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-secondary" onclick="dmCloseEditOverlay()">Cancel</button>
+        <button class="btn btn-primary" onclick="dmSaveEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-overlay" id="loginErrorOverlay">
+    <div class="dialog">
+      <div class="icon">âŒ</div>
+      <h2>Login Failed</h2>
+      <p>Invalid user number or password. Please try again.</p>
+      <button onclick="document.getElementById('loginErrorOverlay').classList.remove('visible');
+                       document.getElementById('password').value='';">Try Again</button>
+    </div>
+  </div>
+
+  <script>
+    // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    let currentUser = null; // { id, firstName, lastName, roleName, roleID }
+    let _viewingRequestId = null;
+
+    // â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const userNumber = document.getElementById('userNumber').value.trim();
+      const password   = document.getElementById('password').value;
+      const submitBtn  = document.getElementById('submitBtn');
+      const errorMsg   = document.getElementById('loginError');
+
+      errorMsg.style.display = 'none';
+
+      if (!userNumber || !password) {
+        errorMsg.textContent = 'Please enter both user number and password.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled    = true;
+      submitBtn.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ userNumber, password })
+        });
+
+        if (res.ok) {
+          currentUser = await res.json();
+          sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+          if (currentUser.mustChangePassword) {
+            showChangePasswordPage();
+          } else {
+            await showHomePage();
+          }
+        } else {
+          document.getElementById('loginErrorOverlay').classList.add('visible');
+        }
+      } catch {
+        errorMsg.textContent    = 'Unable to reach the server. Please try again.';
+        errorMsg.style.display  = 'block';
+      } finally {
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+
+    // â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function setPage(pageId) {
+      ['loginWrapper', 'homePage', 'newRequestPage', 'viewRequestPage',
+       'adminUsersPage', 'adminEditUserPage', 'changePasswordPage', 'dataManagersPage'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+      document.getElementById(pageId).style.display = (pageId === 'loginWrapper') ? 'flex' : 'block';
+      // Persist current page so a browser refresh restores it
+      if (pageId !== 'loginWrapper' && pageId !== 'changePasswordPage') {
+        const state = { pageId };
+        if (pageId === 'viewRequestPage') state.requestId = _viewingRequestId;
+        sessionStorage.setItem('pageState', JSON.stringify(state));
+      }
+    }
+
+    async function showViewRequestPage(id) {
+      setPage('viewRequestPage');
+      document.getElementById('viewHeaderUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('viewHeaderRole').textContent = currentUser.roleName || 'No Role';
+
+      try {
+        const res = await fetch(`/api/requests/${id}`);
+        if (!res.ok) throw new Error('Not found');
+        const r = await res.json();
+
+        document.getElementById('viewTitle').textContent =
+          `Card Request — ${r.firstName} ${r.lastName}`;
+
+        document.getElementById('v_requestID').textContent   = r.requestID;
+        document.getElementById('v_statusChip').innerHTML    = statusChip(r.statusName);
+        document.getElementById('v_submittedBy').textContent = r.submittedBy;
+
+        _viewingRequestId = r.requestID;
+        const canAct = ['Approver', 'Admin'].includes(currentUser.roleName)
+                    && r.statusName === 'Awaiting Approval';
+        document.getElementById('v_actionBar').style.display = canAct ? 'block' : 'none';
+        document.getElementById('v_createdAt').textContent   =
+          new Date(r.createdAt).toLocaleDateString();
+
+        setVal('v_companyName', r.companyName);
+        setVal('v_jobTitle',    r.jobTitle);
+        setVal('v_firstName',   r.firstName);
+        setVal('v_lastName',    r.lastName);
+        setVal('v_address1',    r.address1);
+        setVal('v_address2',    r.address2);
+        setVal('v_city',        r.city);
+        setVal('v_state',       r.stateProvince);
+        setVal('v_zip',         r.zip);
+        setVal('v_country',     r.country);
+        setVal('v_tierName',    r.tierName);
+        document.getElementById('v_expDate').textContent =
+          r.expirationDate ? new Date(r.expirationDate).toLocaleDateString() : '';
+        setVal('v_cardStatus',  r.cardStatus);
+        setVal('v_location',    r.location);
+        setVal('v_manager',     r.manager);
+        setVal('v_approver',    r.approverName);
+        setVal('v_notes',       r.notes);
+
+        // Audit log
+        const auditList = document.getElementById('v_auditLog');
+        if (r.auditLog && r.auditLog.length) {
+          auditList.innerHTML = r.auditLog.map(entry => {
+            const dt = new Date(entry.loggedAt);
+            const when = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            return `<li>
+              <div class="audit-dot"></div>
+              <div class="audit-content">
+                <div class="audit-action">${esc(entry.action)}</div>
+                <div class="audit-meta">${esc(entry.userName)} &middot; ${when}</div>
+              </div>
+            </li>`;
+          }).join('');
+        } else {
+          auditList.innerHTML = '<li><span class="audit-empty">No audit entries.</span></li>';
+        }
+      } catch {
+        document.getElementById('viewTitle').textContent = 'Request not found';
+      }
+    }
+
+    function setVal(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (value) {
+        el.textContent = value;
+        el.classList.remove('empty');
+      } else {
+        el.textContent = '—';
+        el.classList.add('empty');
+      }
+    }
+
+    async function approveRequest() {
+      const btn = document.getElementById('v_approveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Approving...';
+      try {
+        const res = await fetch(`/api/requests/${_viewingRequestId}/approve`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ userId: currentUser.id })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          await showViewRequestPage(_viewingRequestId);
+          document.getElementById('sa_icon').textContent  = '✉';
+          document.getElementById('sa_title').textContent = 'Request Approved';
+          document.getElementById('sa_name').textContent  = data.submittedBy;
+          document.getElementById('statusActionOverlay').classList.add('visible');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✓ Approve';
+      }
+    }
+
+    async function rejectRequest() {
+      const btn = document.getElementById('v_rejectBtn');
+      btn.disabled = true;
+      btn.textContent = 'Rejecting...';
+      try {
+        const res = await fetch(`/api/requests/${_viewingRequestId}/reject`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ userId: currentUser.id })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          await showViewRequestPage(_viewingRequestId);
+          document.getElementById('sa_icon').textContent  = '✉';
+          document.getElementById('sa_title').textContent = 'Request Rejected';
+          document.getElementById('sa_name').textContent  = data.submittedBy;
+          document.getElementById('statusActionOverlay').classList.add('visible');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✗ Reject';
+      }
+    }
+
+    function closeStatusActionOverlay() {
+      document.getElementById('statusActionOverlay').classList.remove('visible');
+      showHomePage();
+    }
+
+    async function showHomePage() {
+      setPage('homePage');
+
+      document.getElementById('headerUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('headerRole').textContent = currentUser.roleName || 'No Role';
+
+      const canSubmit = ['Requestor', 'Admin'].includes(currentUser.roleName);
+      document.getElementById('newRequestBtn').style.display = canSubmit ? 'inline-block' : 'none';
+
+      const isAdmin = currentUser.roleName === 'Admin';
+      document.getElementById('manageUsersBtn').style.display = isAdmin ? 'inline-block' : 'none';
+      document.getElementById('dataMgrBtn').style.display    = isAdmin ? 'inline-block' : 'none';
+
+      await loadRequests();
+    }
+
+    async function showNewRequestPage() {
+      // Populate dropdowns before showing the form
+      await Promise.all([loadTiers(), loadApprovers(), loadLocations()]);
+
+      document.getElementById('formHeaderUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('formHeaderRole').textContent = currentUser.roleName || 'No Role';
+
+      // Clear the form
+      document.getElementById('requestForm').reset();
+      document.getElementById('f_country').value = 'UNITED STATES';
+      document.getElementById('valErrors').style.display = 'none';
+      document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+      setPage('newRequestPage');
+    }
+
+    // â”€â”€ Load requests list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    let _requestsData = [];
+    let _sortCol      = 'createdAt';
+    let _sortAsc      = false;
+
+    async function loadRequests() {
+      const tbody = document.getElementById('requestsBody');
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Loading...</td></tr>';
+
+      try {
+        const res     = await fetch('/api/requests');
+        _requestsData = await res.json();
+        renderRequests();
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load requests.</td></tr>';
+      }
+    }
+
+    function sortRequests(col) {
+      if (_sortCol === col) {
+        _sortAsc = !_sortAsc;
+      } else {
+        _sortCol = col;
+        _sortAsc = true;
+      }
+      renderRequests();
+    }
+
+    function renderRequests() {
+      const tbody = document.getElementById('requestsBody');
+      const cols  = ['requestID','name','companyName','location','tierName','statusName','submittedBy','createdAt'];
+
+      document.querySelectorAll('#requestsTable thead th.sortable').forEach((th, i) => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (cols[i] === _sortCol) th.classList.add(_sortAsc ? 'sort-asc' : 'sort-desc');
+      });
+
+      if (!_requestsData.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No requests yet.</td></tr>';
+        return;
+      }
+
+      const sorted = [..._requestsData].sort((a, b) => {
+        let aVal, bVal;
+        if (_sortCol === 'name') {
+          aVal = (a.firstName + ' ' + a.lastName).toLowerCase();
+          bVal = (b.firstName + ' ' + b.lastName).toLowerCase();
+        } else if (_sortCol === 'createdAt') {
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+        } else if (_sortCol === 'requestID') {
+          aVal = a.requestID;
+          bVal = b.requestID;
+        } else {
+          aVal = (a[_sortCol] || '').toString().toLowerCase();
+          bVal = (b[_sortCol] || '').toString().toLowerCase();
+        }
+        if (aVal < bVal) return _sortAsc ? -1 :  1;
+        if (aVal > bVal) return _sortAsc ?  1 : -1;
+        return 0;
+      });
+
+      tbody.innerHTML = sorted.map(r => {
+        const date = new Date(r.createdAt).toLocaleDateString();
+        const chip = statusChip(r.statusName || '');
+        return `<tr class="clickable-row" onclick="showViewRequestPage(${r.requestID})">
+          <td>${r.requestID}</td>
+          <td>${esc(r.firstName)} ${esc(r.lastName)}</td>
+          <td>${esc(r.companyName)}</td>
+          <td>${esc(r.location || '')}</td>
+          <td>${esc(r.tierName)}</td>
+          <td>${chip}</td>
+          <td>${esc(r.submittedBy)}</td>
+          <td>${date}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function statusChip(status) {
+      const map = {
+        'Awaiting Approval': 'awaiting',
+        'Approved':  'approved',
+        'Printed':   'printed',
+        'Active':    'active',
+        'Inactive':  'inactive',
+        'Unknown':   'unknown'
+      };
+      const cls = map[status] || 'unknown';
+      return `<span class="status-chip status-${cls}">${esc(status)}</span>`;
+    }
+
+    // â”€â”€ Load lookups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    async function loadTiers() {
+      try {
+        const res   = await fetch('/api/lookups/tiers');
+        const tiers = await res.json();
+        const sel   = document.getElementById('f_tier');
+        sel.innerHTML = '<option value="">-- Select a Tier --</option>' +
+          tiers.map(t => `<option value="${t.tierID}">${esc(t.tierName)}</option>`).join('');
+      } catch { /* leave empty */ }
+    }
+
+    async function loadApprovers() {
+      try {
+        const res       = await fetch('/api/lookups/approvers');
+        const approvers = await res.json();
+        const sel       = document.getElementById('f_approver');
+        sel.innerHTML = '<option value="">-- Select an Approver --</option>' +
+          approvers.map(a =>
+            `<option value="${a.id}">${esc(a.firstName)} ${esc(a.lastName)}</option>`
+          ).join('');
+      } catch { /* leave empty */ }
+    }
+
+    async function loadLocations() {
+      try {
+        const res       = await fetch('/api/lookups/locations');
+        const locations = await res.json();
+        const sel       = document.getElementById('f_location');
+        sel.innerHTML = '<option value="">-- Select a Location --</option>' +
+          locations.map(l =>
+            `<option value="${esc(l.locationName)}">${esc(l.locationName)}</option>`
+          ).join('');
+      } catch { /* leave empty */ }
+    }
+
+    // â”€â”€ Submit new request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    document.getElementById('requestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const val  = id => document.getElementById(id).value.trim();
+      const errors = [];
+
+      if (!val('f_companyName'))  errors.push('Company Name is required.');
+      if (!val('f_firstName'))    errors.push('First Name is required.');
+      if (!val('f_lastName'))     errors.push('Last Name is required.');
+      if (!val('f_address1'))     errors.push('Address Line 1 is required.');
+      if (!val('f_city'))         errors.push('City is required.');
+      if (!val('f_state'))        errors.push('State / Province is required.');
+      if (!val('f_zip'))          errors.push('Zip / Postal Code is required.');
+      if (!val('f_tier'))         errors.push('Tier is required.');
+      if (!val('f_expDate'))      errors.push('Expiration Date is required.');
+
+      if (errors.length) {
+        const box  = document.getElementById('valErrors');
+        const list = document.getElementById('valErrorList');
+        list.innerHTML = errors.map(m => `<li>${esc(m)}</li>`).join('');
+        box.style.display = 'block';
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      document.getElementById('valErrors').style.display = 'none';
+
+      const btn = document.getElementById('saveRequestBtn');
+      btn.disabled    = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const body = {
+          companyName:      val('f_companyName'),
+          jobTitle:         val('f_jobTitle'),
+          firstName:        val('f_firstName'),
+          lastName:         val('f_lastName'),
+          address1:         val('f_address1'),
+          address2:         val('f_address2') || null,
+          city:             val('f_city'),
+          stateProvince:    val('f_state'),
+          zip:              val('f_zip'),
+          country:          val('f_country') || 'UNITED STATES',
+          tierID:           parseInt(val('f_tier')),
+          expirationDate:   val('f_expDate'),
+          location:         val('f_location') || null,
+          manager:          val('f_manager') || null,
+          approverUserID:   val('f_approver') ? parseInt(val('f_approver')) : null,
+          notes:            val('f_notes') || null,
+          submittedByUserID: currentUser.id
+        };
+
+        const res = await fetch('/api/requests', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(body)
+        });
+
+        if (res.ok) {
+          const approverSel  = document.getElementById('f_approver');
+          const approverName = approverSel.options[approverSel.selectedIndex]?.text || '';
+          await showHomePage();
+          if (approverName && approverName !== '-- Select an Approver --') {
+            document.getElementById('sr_approverName').textContent = approverName;
+            document.getElementById('submitRequestOverlay').classList.add('visible');
+          }
+        } else {
+          const data = await res.json();
+          const msgs = data.errors ?? ['An unexpected error occurred.'];
+          const box  = document.getElementById('valErrors');
+          document.getElementById('valErrorList').innerHTML =
+            msgs.map(m => `<li>${esc(m)}</li>`).join('');
+          box.style.display = 'block';
+        }
+      } catch {
+        const box = document.getElementById('valErrors');
+        document.getElementById('valErrorList').innerHTML = '<li>Unable to reach the server.</li>';
+        box.style.display = 'block';
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Submit Request';
+      }
+    });
+
+    function closeSubmitRequestOverlay() {
+      document.getElementById('submitRequestOverlay').classList.remove('visible');
+    }
+
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function esc(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // -- Forgot / Reset Password navigation --
+    const LOGIN_CARDS = ['loginCard','forgotCard','fpSuccessCard','resetCard','rpSuccessCard'];
+
+    function showLoginCard(cardId) {
+      LOGIN_CARDS.forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+      document.getElementById(cardId).style.display = 'block';
+      // Ensure loginWrapper is the visible page
+      ['homePage','newRequestPage','viewRequestPage',
+       'adminUsersPage','adminEditUserPage','changePasswordPage','dataManagersPage'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+      document.getElementById('loginWrapper').style.display = 'flex';
+    }
+
+    function showForgotPasswordPage() { showLoginCard('forgotCard'); }
+    function showLoginPage()           { showLoginCard('loginCard');  }
+
+    function showResetPasswordPage(token) {
+      document.getElementById('rp_token').value = token;
+      // Clean the token from the URL bar without a page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url);
+      showLoginCard('resetCard');
+    }
+
+    // Forgot Password form submit
+    document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('fp_email').value.trim();
+      const errEl = document.getElementById('fpError');
+      const btn   = document.getElementById('fpSubmitBtn');
+      errEl.style.display = 'none';
+
+      if (!email) {
+        errEl.textContent   = 'Please enter your email address.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Sending...';
+      try {
+        await fetch('/api/auth/forgot-password', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email })
+        });
+        // Always show success card — don't reveal whether email is on file
+        showLoginCard('fpSuccessCard');
+      } catch {
+        errEl.textContent   = 'Unable to reach the server. Please try again.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Send Reset Link';
+      }
+    });
+
+    // Reset Password form submit
+    document.getElementById('resetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token    = document.getElementById('rp_token').value;
+      const password = document.getElementById('rp_password').value;
+      const confirm  = document.getElementById('rp_confirm').value;
+      const errEl    = document.getElementById('rpError');
+      const btn      = document.getElementById('rpSubmitBtn');
+      errEl.style.display = 'none';
+
+      if (!password || password.length < 8) {
+        errEl.textContent   = 'Password must be at least 8 characters.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (password !== confirm) {
+        errEl.textContent   = 'Passwords do not match.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Updating...';
+      try {
+        const res = await fetch('/api/auth/reset-password', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ token, newPassword: password })
+        });
+        if (res.ok) {
+          showLoginCard('rpSuccessCard');
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errEl.textContent   = data.message ?? 'This reset link is invalid or has expired.';
+          errEl.style.display = 'block';
+        }
+      } catch {
+        errEl.textContent   = 'Unable to reach the server. Please try again.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Set New Password';
+      }
+    });
+
+    // ── Admin: Users ────────────────────────────────────────────────────────
+
+    let adminRoles = [];  // cache for role dropdown
+
+    async function showAdminUsersPage() {
+      setPage('adminUsersPage');
+      document.getElementById('adminHeaderUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('adminHeaderRole').textContent = currentUser.roleName || 'No Role';
+      await loadAdminUsers();
+    }
+
+    async function loadAdminUsers() {
+      const tbody = document.getElementById('adminUsersBody');
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
+      try {
+        const res  = await fetch('/api/users');
+        const users = await res.json();
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No users found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = users.map((u, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${esc(u.firstName)} ${esc(u.lastName)}</td>
+            <td>${esc(u.userNumber)}</td>
+            <td>${esc(u.email || '')}</td>
+            <td>${esc(u.roleName || '—')}</td>
+            <td>
+              <span class="status-chip ${u.isActive ? 'status-approved' : 'status-rejected'}">
+                ${u.isActive ? 'Active' : 'Inactive'}
+              </span>
+              ${u.mustChangePassword ? '<span class="status-chip status-pending" style="margin-left:4px;">Pwd Reset</span>' : ''}
+            </td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;"
+                      onclick="showEditUserPage(${u.id})">Edit</button>
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;margin-left:4px;"
+                      onclick="openSetPasswordModal(${u.id}, '${esc(u.firstName)} ${esc(u.lastName)}')">Set Pwd</button>
+              ${u.isActive
+                ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;margin-left:4px;background:#dc2626;color:#fff;border-color:#dc2626;"
+                           onclick="confirmDeactivate(${u.id}, '${esc(u.firstName)} ${esc(u.lastName)}')">Deactivate</button>`
+                : `<button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;margin-left:4px;background:#16a34a;color:#fff;border-color:#16a34a;"
+                           onclick="confirmActivate(${u.id}, '${esc(u.firstName)} ${esc(u.lastName)}')">Activate</button>`
+              }
+            </td>
+          </tr>`).join('');
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load users.</td></tr>';
+      }
+    }
+
+    async function loadRolesDropdown(selectId, selectedRoleId) {
+      if (!adminRoles.length) {
+        try {
+          const res = await fetch('/api/lookups/roles');
+          adminRoles = await res.json();
+        } catch { adminRoles = []; }
+      }
+      const sel = document.getElementById(selectId);
+      sel.innerHTML = '<option value="">-- Select Role --</option>' +
+        adminRoles.map(r =>
+          `<option value="${r.id}" ${r.id === selectedRoleId ? 'selected' : ''}>${esc(r.name)}</option>`
+        ).join('');
+    }
+
+    async function showAddUserPage() {
+      document.getElementById('eu_id').value          = '';
+      document.getElementById('eu_firstName').value   = '';
+      document.getElementById('eu_lastName').value    = '';
+      document.getElementById('eu_userNumber').value  = '';
+      document.getElementById('eu_email').value       = '';
+      document.getElementById('eu_password').value    = '';
+      document.getElementById('eu_passwordConfirm').value = '';
+      document.getElementById('editUserErrors').style.display = 'none';
+      document.getElementById('editUserTitle').textContent = 'Add User';
+      document.getElementById('eu_passwordSection').style.display = 'block';
+      document.getElementById('editUserHeaderUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('editUserHeaderRole').textContent = currentUser.roleName || 'No Role';
+      await loadRolesDropdown('eu_role', null);
+      setPage('adminEditUserPage');
+    }
+
+    async function showEditUserPage(id) {
+      document.getElementById('editUserErrors').style.display = 'none';
+      document.getElementById('editUserTitle').textContent = 'Edit User';
+      document.getElementById('eu_passwordSection').style.display = 'none';
+      document.getElementById('editUserHeaderUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('editUserHeaderRole').textContent = currentUser.roleName || 'No Role';
+      try {
+        const res = await fetch(`/api/users/${id}`);
+        if (!res.ok) throw new Error();
+        const u = await res.json();
+        document.getElementById('eu_id').value         = u.id;
+        document.getElementById('eu_firstName').value  = u.firstName;
+        document.getElementById('eu_lastName').value   = u.lastName;
+        document.getElementById('eu_userNumber').value = u.userNumber;
+        document.getElementById('eu_email').value      = u.email || '';
+        await loadRolesDropdown('eu_role', u.roleID);
+      } catch {
+        alert('Could not load user.');
+        return;
+      }
+      setPage('adminEditUserPage');
+    }
+
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id      = document.getElementById('eu_id').value;
+      const isNew   = !id;
+      const errors  = [];
+
+      const firstName  = document.getElementById('eu_firstName').value.trim();
+      const lastName   = document.getElementById('eu_lastName').value.trim();
+      const userNumber = document.getElementById('eu_userNumber').value.trim();
+      const email      = document.getElementById('eu_email').value.trim();
+      const roleID     = parseInt(document.getElementById('eu_role').value, 10);
+      const password   = document.getElementById('eu_password').value;
+      const confirm    = document.getElementById('eu_passwordConfirm').value;
+
+      if (!firstName)  errors.push('First name is required.');
+      if (!lastName)   errors.push('Last name is required.');
+      if (!userNumber) errors.push('User number is required.');
+      if (!roleID)     errors.push('Role is required.');
+      if (isNew) {
+        if (!password)  errors.push('Password is required.');
+        else if (password.length < 8) errors.push('Password must be at least 8 characters.');
+        else if (password !== confirm) errors.push('Passwords do not match.');
+      }
+
+      const errBox  = document.getElementById('editUserErrors');
+      const errList = document.getElementById('editUserErrorList');
+      if (errors.length) {
+        errList.innerHTML = errors.map(m => `<li>${esc(m)}</li>`).join('');
+        errBox.style.display = 'block';
+        return;
+      }
+      errBox.style.display = 'none';
+
+      const btn = document.getElementById('saveUserBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        let res;
+        if (isNew) {
+          res = await fetch('/api/users', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ firstName, lastName, userNumber, email, password, roleID })
+          });
+        } else {
+          res = await fetch(`/api/users/${id}`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ firstName, lastName, userNumber, email, roleID })
+          });
+        }
+        if (res.ok) {
+          await showAdminUsersPage();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          const msgs = data.errors ?? [data.message ?? 'An unexpected error occurred.'];
+          errList.innerHTML = msgs.map(m => `<li>${esc(m)}</li>`).join('');
+          errBox.style.display = 'block';
+        }
+      } catch {
+        errList.innerHTML = '<li>Unable to reach the server.</li>';
+        errBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save User';
+      }
+    });
+
+    // Set Password modal
+    function openSetPasswordModal(userId, userName) {
+      document.getElementById('sp_userId').value = userId;
+      document.getElementById('sp_password').value = '';
+      document.getElementById('sp_confirm').value  = '';
+      document.getElementById('sp_mustChange').checked = false;
+      document.getElementById('sp_error').textContent  = '';
+      document.getElementById('setPasswordOverlay').classList.add('visible');
+    }
+
+    function closeSetPasswordModal() {
+      document.getElementById('setPasswordOverlay').classList.remove('visible');
+    }
+
+    async function submitSetPassword() {
+      const userId     = document.getElementById('sp_userId').value;
+      const password   = document.getElementById('sp_password').value;
+      const confirm    = document.getElementById('sp_confirm').value;
+      const mustChange = document.getElementById('sp_mustChange').checked;
+      const errEl      = document.getElementById('sp_error');
+
+      if (!password) { errEl.textContent = 'Password is required.'; return; }
+      if (password.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; return; }
+      if (password !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
+      errEl.textContent = '';
+
+      try {
+        const res = await fetch(`/api/users/${userId}/set-password`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ newPassword: password, mustChangePassword: mustChange })
+        });
+        if (res.ok) {
+          closeSetPasswordModal();
+          await loadAdminUsers();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errEl.textContent = data.message ?? 'Failed to set password.';
+        }
+      } catch {
+        errEl.textContent = 'Unable to reach the server.';
+      }
+    }
+
+    // Confirm action modal
+    let _confirmCallback = null;
+
+    function openConfirmModal(title, message, icon, okBtnColor, callback) {
+      document.getElementById('confirmTitle').textContent   = title;
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmIcon').textContent    = icon || '⚠';
+      document.getElementById('confirmOkBtn').style.background = okBtnColor || '#dc2626';
+      _confirmCallback = callback;
+      document.getElementById('confirmActionOverlay').classList.add('visible');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmActionOverlay').classList.remove('visible');
+      _confirmCallback = null;
+    }
+
+    document.getElementById('confirmOkBtn').addEventListener('click', async () => {
+      const cb = _confirmCallback;
+      if (cb) {
+        closeConfirmModal();
+        await cb();
+      }
+    });
+
+    function confirmDeactivate(userId, userName) {
+      openConfirmModal(
+        'Deactivate User',
+        `Are you sure you want to deactivate ${userName}? They will no longer be able to log in.`,
+        '⚠', '#dc2626',
+        async () => {
+          await fetch(`/api/users/${userId}/deactivate`, { method: 'POST' });
+          await loadAdminUsers();
+        }
+      );
+    }
+
+    function confirmActivate(userId, userName) {
+      openConfirmModal(
+        'Activate User',
+        `Re-activate ${userName}?`,
+        '✓', '#16a34a',
+        async () => {
+          await fetch(`/api/users/${userId}/activate`, { method: 'POST' });
+          await loadAdminUsers();
+        }
+      );
+    }
+
+    // Change Password page (forced post-login)
+    function showChangePasswordPage() {
+      setPage('changePasswordPage');
+      document.getElementById('changePasswordForm').reset();
+      document.getElementById('cp_error').textContent = '';
+    }
+
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('cp_password').value;
+      const confirm  = document.getElementById('cp_confirm').value;
+      const errEl    = document.getElementById('cp_error');
+      const btn      = document.getElementById('cp_submitBtn');
+
+      if (!password || password.length < 8) {
+        errEl.textContent = 'Password must be at least 8 characters.';
+        return;
+      }
+      if (password !== confirm) {
+        errEl.textContent = 'Passwords do not match.';
+        return;
+      }
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const res = await fetch(`/api/users/${currentUser.id}/set-password`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ newPassword: password, mustChangePassword: false })
+        });
+        if (res.ok) {
+          currentUser.mustChangePassword = false;
+          sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+          await showHomePage();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errEl.textContent = data.message ?? 'Failed to update password.';
+        }
+      } catch {
+        errEl.textContent = 'Unable to reach the server.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Set New Password';
+      }
+    });
+
+    function signOut() {
+      currentUser = null;
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('pageState');
+      showLoginPage();
+    }
+
+    // ── Data Managers ────────────────────────────────────────────────────
+    let _dmCurrentTab = 'locations';
+
+    async function showDataManagersPage() {
+      setPage('dataManagersPage');
+      document.getElementById('dmHeaderUser').textContent =
+        `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('dmHeaderRole').textContent = currentUser.roleName || 'No Role';
+      _dmCurrentTab = 'locations';
+      ['locations','statuses','roles'].forEach(t => {
+        document.getElementById(`dmTab-${t}`).classList.toggle('active', t === 'locations');
+        document.getElementById(`dmPanel-${t}`).style.display = t === 'locations' ? 'block' : 'none';
+      });
+      await loadDmLocations();
+    }
+
+    function dmSwitchTab(tab) {
+      _dmCurrentTab = tab;
+      ['locations','statuses','roles'].forEach(t => {
+        document.getElementById(`dmTab-${t}`).classList.toggle('active', t === tab);
+        document.getElementById(`dmPanel-${t}`).style.display = t === tab ? 'block' : 'none';
+      });
+      if (tab === 'locations') loadDmLocations();
+      else if (tab === 'statuses') loadDmStatuses();
+      else if (tab === 'roles') loadDmRoles();
+    }
+
+    // -- Locations --
+    async function loadDmLocations() {
+      const tbody = document.getElementById('dmLocationsBody');
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Loading...</td></tr>';
+      try {
+        const res   = await fetch('/api/data-managers/locations');
+        const items = await res.json();
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No locations found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = items.map((loc, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${esc(loc.locationName)}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;"
+                      onclick="dmOpenEditOverlay('location',${loc.locationID},'${esc(loc.locationName)}')">Edit</button>
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;margin-left:4px;background:#dc2626;color:#fff;border-color:#dc2626;"
+                      onclick="dmConfirmDelete('location',${loc.locationID},'${esc(loc.locationName)}')">Delete</button>
+            </td>
+          </tr>`).join('');
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Failed to load locations.</td></tr>';
+      }
+    }
+
+    async function dmAddLocation() {
+      const input = document.getElementById('dmNewLocation');
+      const name  = input.value.trim();
+      if (!name) { input.focus(); return; }
+      try {
+        const res = await fetch('/api/data-managers/locations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if (res.ok) {
+          input.value = '';
+          await loadDmLocations();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          alert(data.message ?? 'Failed to add location.');
+        }
+      } catch {
+        alert('Unable to reach the server.');
+      }
+    }
+
+    // -- Statuses --
+    async function loadDmStatuses() {
+      const tbody = document.getElementById('dmStatusesBody');
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Loading...</td></tr>';
+      try {
+        const res   = await fetch('/api/data-managers/statuses');
+        const items = await res.json();
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No statuses found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = items.map((s, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${esc(s.statusName)}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;"
+                      onclick="dmOpenEditOverlay('status',${s.statusID},'${esc(s.statusName)}')">Edit</button>
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;margin-left:4px;background:#dc2626;color:#fff;border-color:#dc2626;"
+                      onclick="dmConfirmDelete('status',${s.statusID},'${esc(s.statusName)}')">Delete</button>
+            </td>
+          </tr>`).join('');
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Failed to load statuses.</td></tr>';
+      }
+    }
+
+    async function dmAddStatus() {
+      const input = document.getElementById('dmNewStatus');
+      const name  = input.value.trim();
+      if (!name) { input.focus(); return; }
+      try {
+        const res = await fetch('/api/data-managers/statuses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if (res.ok) {
+          input.value = '';
+          await loadDmStatuses();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          alert(data.message ?? 'Failed to add status.');
+        }
+      } catch {
+        alert('Unable to reach the server.');
+      }
+    }
+
+    // -- Roles --
+    async function loadDmRoles() {
+      const tbody = document.getElementById('dmRolesBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Loading...</td></tr>';
+      try {
+        const res   = await fetch('/api/data-managers/roles');
+        const items = await res.json();
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No roles found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = items.map((r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${esc(r.roleName)}</td>
+            <td>${esc(r.roleDescription || '')}</td>
+            <td>${r.sortOrder}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;"
+                      onclick="dmOpenEditOverlay('role',${r.roleID},null,${JSON.stringify({roleName:r.roleName,roleDescription:r.roleDescription||'',sortOrder:r.sortOrder})})">Edit</button>
+              <button class="btn btn-secondary" style="padding:4px 10px;font-size:13px;margin-left:4px;background:#dc2626;color:#fff;border-color:#dc2626;"
+                      onclick="dmConfirmDelete('role',${r.roleID},'${esc(r.roleName)}')">Delete</button>
+            </td>
+          </tr>`).join('');
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load roles.</td></tr>';
+      }
+    }
+
+    async function dmAddRole() {
+      const name  = document.getElementById('dmNewRoleName').value.trim();
+      const desc  = document.getElementById('dmNewRoleDesc').value.trim();
+      const sort  = parseInt(document.getElementById('dmNewRoleSort').value, 10) || 0;
+      const errEl = document.getElementById('dmRoleAddError');
+      if (!name) {
+        errEl.textContent = 'Role name is required.';
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch('/api/data-managers/roles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roleName: name, roleDescription: desc, sortOrder: sort })
+        });
+        if (res.ok) {
+          document.getElementById('dmNewRoleName').value = '';
+          document.getElementById('dmNewRoleDesc').value = '';
+          document.getElementById('dmNewRoleSort').value = '0';
+          await loadDmRoles();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errEl.textContent = data.message ?? 'Failed to add role.';
+          errEl.style.display = 'block';
+        }
+      } catch {
+        errEl.textContent = 'Unable to reach the server.';
+        errEl.style.display = 'block';
+      }
+    }
+
+    // -- Edit overlay --
+    function dmOpenEditOverlay(type, id, name, roleObj) {
+      document.getElementById('dmEditId').value   = id;
+      document.getElementById('dmEditType').value = type;
+      document.getElementById('dmEditError').textContent = '';
+
+      const nameDiv = document.getElementById('dmEditNameField');
+      const roleDiv = document.getElementById('dmEditRoleFields');
+
+      if (type === 'role') {
+        nameDiv.style.display = 'none';
+        roleDiv.style.display = 'block';
+        document.getElementById('dmEditTitle').textContent = 'Edit Role';
+        document.getElementById('dmEditRoleName').value = roleObj.roleName || '';
+        document.getElementById('dmEditRoleDesc').value = roleObj.roleDescription || '';
+        document.getElementById('dmEditRoleSort').value = roleObj.sortOrder ?? 0;
+      } else {
+        nameDiv.style.display = 'block';
+        roleDiv.style.display = 'none';
+        document.getElementById('dmEditTitle').textContent =
+          type === 'location' ? 'Edit Location' : 'Edit Status';
+        document.getElementById('dmEditName').value = name || '';
+      }
+
+      document.getElementById('dmEditOverlay').classList.add('visible');
+    }
+
+    function dmCloseEditOverlay() {
+      document.getElementById('dmEditOverlay').classList.remove('visible');
+    }
+
+    async function dmSaveEdit() {
+      const id   = parseInt(document.getElementById('dmEditId').value, 10);
+      const type = document.getElementById('dmEditType').value;
+      const errEl = document.getElementById('dmEditError');
+      errEl.textContent = '';
+
+      let url, body;
+      if (type === 'role') {
+        const roleName        = document.getElementById('dmEditRoleName').value.trim();
+        const roleDescription = document.getElementById('dmEditRoleDesc').value.trim();
+        const sortOrder       = parseInt(document.getElementById('dmEditRoleSort').value, 10) || 0;
+        if (!roleName) { errEl.textContent = 'Role name is required.'; return; }
+        url  = `/api/data-managers/roles/${id}`;
+        body = JSON.stringify({ roleName, roleDescription, sortOrder });
+      } else {
+        const name = document.getElementById('dmEditName').value.trim();
+        if (!name) { errEl.textContent = 'Name is required.'; return; }
+        url  = `/api/data-managers/${type === 'location' ? 'locations' : 'statuses'}/${id}`;
+        body = JSON.stringify({ name });
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body
+        });
+        if (res.ok) {
+          dmCloseEditOverlay();
+          if (type === 'location') await loadDmLocations();
+          else if (type === 'status') await loadDmStatuses();
+          else await loadDmRoles();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errEl.textContent = data.message ?? 'Failed to save.';
+        }
+      } catch {
+        errEl.textContent = 'Unable to reach the server.';
+      }
+    }
+
+    // -- Delete --
+    function dmConfirmDelete(type, id, label) {
+      const typeLabel = type === 'location' ? 'location' : type === 'status' ? 'status' : 'role';
+      openConfirmModal(
+        `Delete ${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}`,
+        `Delete "${label}"? This cannot be undone.`,
+        '🗑', '#dc2626',
+        async () => {
+          try {
+            const segment = type === 'location' ? 'locations' : type === 'status' ? 'statuses' : 'roles';
+            const res = await fetch(`/api/data-managers/${segment}/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+              if (type === 'location') await loadDmLocations();
+              else if (type === 'status') await loadDmStatuses();
+              else await loadDmRoles();
+            } else if (res.status === 409) {
+              const data = await res.json().catch(() => ({}));
+              alert(data.message ?? 'Cannot delete: item is in use.');
+            } else {
+              alert('Failed to delete.');
+            }
+          } catch {
+            alert('Unable to reach the server.');
+          }
+        }
+      );
+    }
+
+    // On page load: restore session or handle ?token= reset link
+    window.addEventListener('load', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const token  = params.get('token');
+      if (token) { showResetPasswordPage(token); return; }
+
+      const stored = sessionStorage.getItem('currentUser');
+      if (stored) {
+        try {
+          currentUser = JSON.parse(stored);
+          if (currentUser.mustChangePassword) {
+            showChangePasswordPage();
+            return;
+          }
+          const pageState = JSON.parse(sessionStorage.getItem('pageState') || '{}');
+          const page = pageState.pageId || 'homePage';
+          if (page === 'viewRequestPage' && pageState.requestId) {
+            await showViewRequestPage(pageState.requestId);
+          } else if (page === 'newRequestPage') {
+            await showNewRequestPage();
+          } else if (page === 'adminUsersPage') {
+            await showAdminUsersPage();
+          } else if (page === 'adminEditUserPage') {
+            await showAdminUsersPage();
+          } else if (page === 'dataManagersPage') {
+            await showDataManagersPage();
+          } else {
+            await showHomePage();
+          }
+        } catch {
+          sessionStorage.removeItem('currentUser');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

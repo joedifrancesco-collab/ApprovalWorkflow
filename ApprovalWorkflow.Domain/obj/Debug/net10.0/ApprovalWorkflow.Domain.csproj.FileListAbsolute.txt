@@ -1,0 +1,11 @@
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\bin\Debug\net10.0\ApprovalWorkflow.Domain.deps.json
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\bin\Debug\net10.0\ApprovalWorkflow.Domain.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\bin\Debug\net10.0\ApprovalWorkflow.Domain.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ApprovalWorkflow.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ApprovalWorkflow.Domain.AssemblyInfoInputs.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ApprovalWorkflow.Domain.AssemblyInfo.cs
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ApprovalWorkflow.Domain.csproj.CoreCompileInputs.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ApprovalWorkflow.Domain.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\refint\ApprovalWorkflow.Domain.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ApprovalWorkflow.Domain.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Domain\obj\Debug\net10.0\ref\ApprovalWorkflow.Domain.dll

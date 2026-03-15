@@ -1,0 +1,15 @@
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\bin\Debug\net10.0\ApprovalWorkflow.Application.deps.json
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\bin\Debug\net10.0\ApprovalWorkflow.Application.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\bin\Debug\net10.0\ApprovalWorkflow.Application.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\bin\Debug\net10.0\ApprovalWorkflow.Domain.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\bin\Debug\net10.0\ApprovalWorkflow.Domain.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.csproj.AssemblyReference.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.AssemblyInfoInputs.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.AssemblyInfo.cs
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.csproj.CoreCompileInputs.cache
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\Approval.546501AA.Up2Date
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\refint\ApprovalWorkflow.Application.dll
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ApprovalWorkflow.Application.pdb
+C:\Users\joedi\ApprovalWorkflow\ApprovalWorkflow.Application\obj\Debug\net10.0\ref\ApprovalWorkflow.Application.dll
