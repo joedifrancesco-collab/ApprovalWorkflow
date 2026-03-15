@@ -5,6 +5,7 @@ A comprehensive .NET web application for managing workflow approvals, built with
 ## 📋 Table of Contents
 
 - [About](#about)
+- [Technology Stack](#technology-stack)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
@@ -18,6 +19,40 @@ A comprehensive .NET web application for managing workflow approvals, built with
 ## About
 
 ApprovalWorkflow is an experimental project designed to demonstrate building a modern .NET web application for managing approval requests. The system allows users to submit requests for approval cards, track their status, and manage the entire approval workflow lifecycle. This project was developed as a learning exercise to explore building .NET web applications with Claude Code.
+
+## Technology Stack
+
+### Backend
+- **[.NET 8.0](https://dotnet.microsoft.com/)** - Latest LTS version of .NET
+- **[ASP.NET Core](https://docs.microsoft.com/aspnet/core/)** - Web API framework
+- **[C# 12](https://docs.microsoft.com/dotnet/csharp/)** - Primary programming language
+- **[Entity Framework Core](https://docs.microsoft.com/ef/core/)** - ORM for database access
+- **[SQL Server](https://www.microsoft.com/sql-server)** - Relational database
+
+### Security
+- **[BCrypt.Net](https://github.com/BcryptNet/bcrypt.net)** - Password hashing and encryption
+- **Authentication** - Custom token-based authentication
+- **Authorization** - Role-based access control (RBAC)
+
+### Architecture & Patterns
+- **Clean Architecture** - Separation of concerns with layered architecture
+- **Repository Pattern** - Data access abstraction
+- **Dependency Injection** - Built-in ASP.NET Core DI container
+- **DTOs (Data Transfer Objects)** - API data contracts
+
+### API & Documentation
+- **RESTful API** - Standard HTTP REST endpoints
+- **[Swagger/OpenAPI](https://swagger.io/)** - Interactive API documentation
+- **JSON** - Data serialization format
+
+### Development Tools
+- **[PowerShell](https://docs.microsoft.com/powershell/)** - Automation scripting
+- **[Visual Studio 2022](https://visualstudio.microsoft.com/)** - Primary IDE
+- **[Visual Studio Code](https://code.visualstudio.com/)** - Lightweight alternative IDE
+
+### Email (Planned)
+- **SMTP** - Email delivery protocol for notifications
+- **Email Service Interface** - Abstracted email functionality
 
 ## Features
 
